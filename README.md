@@ -82,7 +82,18 @@ cargo build --target wasm32-unknown-unknown
 
 **Network**: Stellar Testnet
 
-**Explorer Link**: https://stellar.expert/explorer/testnet/contract/CALSOMXGUXSM7JGKOO4K52LOCZQW2ERYWFUDITYR5E7VZLWAU7CNHV2B
+**Explorer Link**: https://stellar.expert/explorer/testnet/tx/ef22bae483ff8b4c8f44876947afd928af4b30dc171cc9fafbe23103b489f2a5
+
+### Deployment Details
+
+✅ **Contract deployed successfully!**
+
+The contract has been deployed to the Stellar Testnet with the following:
+- **Alias Mapping**: `~/.config/stellar/contract-ids/hello_world.json` (allows using `hello_world` alias instead of contract ID)
+- **Transaction Hash**: `ef22bae483ff8b4c8f44876947afd928af4b30dc171cc9fafbe23103b489f2a5`
+- **WASM Hash**: `0c358b2d2a496c86f0951848185bfc6e350cff5824e2edcb04dc03926f21255d`
+
+You can reference this contract using the alias `hello_world` in future commands instead of the full contract ID.
 
 ## Getting Started
 
