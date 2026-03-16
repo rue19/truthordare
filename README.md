@@ -1,5 +1,6 @@
 # Truth or Dare - Soroban Smart Contract
-
+![alt text](<Screenshot from 2026-03-16 13-05-40.png>)
+![alt text](image.png)
 ## Project Description
 
 **Truth or Dare** is a decentralized game smart contract built on the Stellar blockchain using Soroban. This contract enables peer-to-peer gameplay of the classic Truth or Dare game with on-chain verification and tracking. Players can engage in challenges, complete tasks, and earn verifiable records of their participation directly on the Stellar network.

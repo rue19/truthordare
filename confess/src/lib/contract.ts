@@ -202,10 +202,15 @@ export function isValidStellarAddress(address: string): boolean {
  */
 export async function getAccountDetails(publicKey: string) {
   try {
+    console.log('Fetching account details for:', publicKey);
     const account = await server.getAccount(publicKey);
+    console.log('Account details retrieved successfully:', account);
     return account;
-  } catch (error) {
-    console.error('Error fetching account:', error);
+  } catch (error: any) {
+    console.error('Error fetching account:', error?.message || error);
+    if (error?.response?.status === 404) {
+      console.error('Account not found on testnet. Fund it at https://laboratory.stellar.org/#account-creator');
+    }
     return null;
   }
 }

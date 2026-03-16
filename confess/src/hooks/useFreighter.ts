@@ -3,15 +3,6 @@ import { useWalletStore } from './useOracleState';
 
 interface StellarWindow extends Window {
   stellar?: {
-    stellar?: {
-      isConnected: () => Promise<boolean>;
-      getPublicKey: () => Promise<string>;
-      signTransaction: (
-        transactionXDR: string,
-        options?: { network?: string }
-      ) => Promise<{ signedXDR: string }>;
-      signMessage: (message: string) => Promise<{ signedMessage: string }>;
-    };
     isConnected: () => Promise<boolean>;
     getPublicKey: () => Promise<string>;
     signTransaction: (
@@ -19,6 +10,7 @@ interface StellarWindow extends Window {
       options?: { network?: string }
     ) => Promise<{ signedXDR: string }>;
     signMessage: (message: string) => Promise<{ signedMessage: string }>;
+    requestStellarAccess?: () => Promise<string>;
   };
 }
 
@@ -112,16 +104,23 @@ export function useFreighter() {
         throw new Error('Stellar wallet API not available');
       }
 
-      // Check if wallet connection is possible
-      const isConnected_ = await w.stellar.isConnected();
-      console.log('Wallet connection status:', isConnected_);
-      
-      if (!isConnected_) {
-        throw new Error('Stellar wallet is not connected. Please unlock it and try again.');
+      // Request wallet access (returns public key)
+      let key: string;
+      if (w.stellar.requestStellarAccess) {
+        // Use requestStellarAccess if available
+        key = await w.stellar.requestStellarAccess();
+      } else {
+        // Fallback: try to get public key directly
+        const isConnected_ = await w.stellar.isConnected();
+        console.log('Wallet connection status:', isConnected_);
+        
+        if (!isConnected_) {
+          throw new Error('Stellar wallet is not connected. Please unlock it and try again.');
+        }
+
+        key = await w.stellar.getPublicKey();
       }
 
-      // Get public key
-      const key = await w.stellar.getPublicKey();
       if (!key) {
         throw new Error('Unable to retrieve public key from Stellar wallet');
       }
