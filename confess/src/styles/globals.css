@@ -1,0 +1,129 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --void-black: #05050a;
+  --teal-accent: #00ffe1;
+  --ember-red: #ff3d00;
+  --dark-secondary: #0a0a0f;
+  --glow-teal: 0 0 20px rgba(0, 255, 225, 0.5);
+  --glow-ember: 0 0 20px rgba(255, 61, 0, 0.5);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  background: var(--void-black);
+  color: #ffffff;
+  font-family: 'DM Mono', monospace;
+  overflow: hidden;
+}
+
+#__next {
+  width: 100%;
+  height: 100%;
+}
+
+canvas {
+  display: block;
+}
+
+/* Typography */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.bebas {
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Glitch Animation */
+@keyframes glitch {
+  0%,
+  100% {
+    text-shadow: -2px 0 var(--teal-accent), 2px 0 var(--ember-red);
+  }
+  14% {
+    text-shadow: -2px 0 var(--teal-accent), 2px 0 var(--ember-red);
+  }
+  15% {
+    text-shadow: -2px 0 var(--ember-red), 2px 0 var(--teal-accent);
+  }
+  49% {
+    text-shadow: -2px 0 var(--ember-red), 2px 0 var(--teal-accent);
+  }
+  50% {
+    text-shadow: -2px 0 var(--teal-accent), 2px 0 var(--ember-red);
+  }
+  99% {
+    text-shadow: -2px 0 var(--teal-accent), 2px 0 var(--ember-red);
+  }
+}
+
+.glitch-text {
+  animation: glitch 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+}
+
+/* Glow Effects */
+.glow-teal {
+  text-shadow: 0 0 10px var(--teal-accent), 0 0 20px var(--teal-accent);
+}
+
+.glow-ember {
+  text-shadow: 0 0 10px var(--ember-red), 0 0 20px var(--ember-red);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--void-black);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--teal-accent);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ember-red);
+}
+
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
