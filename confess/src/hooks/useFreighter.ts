@@ -1,13 +1,22 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useWalletStore } from './useOracleState';
 
-interface FreighterWindow extends Window {
-  freighter?: {
+interface StellarWindow extends Window {
+  stellar?: {
+    stellar?: {
+      isConnected: () => Promise<boolean>;
+      getPublicKey: () => Promise<string>;
+      signTransaction: (
+        transactionXDR: string,
+        options?: { network?: string }
+      ) => Promise<{ signedXDR: string }>;
+      signMessage: (message: string) => Promise<{ signedMessage: string }>;
+    };
     isConnected: () => Promise<boolean>;
     getPublicKey: () => Promise<string>;
     signTransaction: (
       transactionXDR: string,
-      network: string
+      options?: { network?: string }
     ) => Promise<{ signedXDR: string }>;
     signMessage: (message: string) => Promise<{ signedMessage: string }>;
   };
@@ -30,9 +39,12 @@ export function useFreighter() {
     if (typeof window === 'undefined') return;
 
     const checkFreighter = () => {
-      const window_ = globalThis as unknown as FreighterWindow;
-      if (window_.freighter) {
+      const w = globalThis as unknown as StellarWindow;
+      if (w.stellar) {
+        console.log('Freighter wallet detected:', w.stellar);
         setFreighterReady(true);
+      } else {
+        console.warn('Freighter wallet not found on window.stellar');
       }
     };
 
@@ -40,21 +52,44 @@ export function useFreighter() {
     checkFreighter();
 
     // Listen for Freighter load event
-    window.addEventListener('freighterLoaded', checkFreighter);
+    const handleFreighterLoad = () => {
+      console.log('Freighter load event fired');
+      checkFreighter();
+    };
+
+    window.addEventListener('stellar:ready', handleFreighterLoad);
+    document.addEventListener('stellar:ready', handleFreighterLoad);
     
     // Also set up a timeout check for cases where the event doesn't fire
-    const timeout = setTimeout(checkFreighter, 2000);
+    const timeout = setTimeout(() => {
+      console.log('Timeout check for Freighter');
+      checkFreighter();
+    }, 2000);
 
-    return () => {
-      window.removeEventListener('freighterLoaded', checkFreighter);
-      clearTimeout(timeout);
-    };
+    // Additional check on document load
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', checkFreighter);
+      return () => {
+        window.removeEventListener('stellar:ready', handleFreighterLoad);
+        document.removeEventListener('stellar:ready', handleFreighterLoad);
+        document.removeEventListener('DOMContentLoaded', checkFreighter);
+        clearTimeout(timeout);
+      };
+    } else {
+      return () => {
+        window.removeEventListener('stellar:ready', handleFreighterLoad);
+        document.removeEventListener('stellar:ready', handleFreighterLoad);
+        clearTimeout(timeout);
+      };
+    }
   }, []);
 
   const isFreighterInstalled = useCallback((): boolean => {
     if (typeof window === 'undefined') return false;
-    const window_ = globalThis as unknown as FreighterWindow;
-    return !!window_.freighter;
+    const w = globalThis as unknown as StellarWindow;
+    const hasStellar = !!w.stellar;
+    console.log('Checking Freighter installed:', hasStellar, w.stellar);
+    return hasStellar;
   }, []);
 
   const connect = useCallback(async () => {
@@ -63,36 +98,43 @@ export function useFreighter() {
       const errorMsg = 'Freighter extension not installed. Please install it from https://freighter.app';
       setError(errorMsg);
       setNetworkError(errorMsg);
-      console.error('Freighter not detected on window object');
+      console.error('Stellar/Freighter wallet not detected on window.stellar');
       return null;
     }
 
     try {
       setIsLoading(true);
       setError(null);
-      const window_ = globalThis as unknown as FreighterWindow;
+      const w = globalThis as unknown as StellarWindow;
+
+      // Check if wallet is available
+      if (!w.stellar) {
+        throw new Error('Stellar wallet API not available');
+      }
 
       // Check if wallet connection is possible
-      const isConnected_ = await window_.freighter?.isConnected();
+      const isConnected_ = await w.stellar.isConnected();
+      console.log('Wallet connection status:', isConnected_);
+      
       if (!isConnected_) {
-        throw new Error('Freighter wallet is not connected. Please unlock it and try again.');
+        throw new Error('Stellar wallet is not connected. Please unlock it and try again.');
       }
 
       // Get public key
-      const key = await window_.freighter?.getPublicKey();
+      const key = await w.stellar.getPublicKey();
       if (!key) {
-        throw new Error('Unable to retrieve public key from Freighter');
+        throw new Error('Unable to retrieve public key from Stellar wallet');
       }
 
       setPublicKey(key);
       setIsConnected(true);
       setNetworkError(null);
-      console.log('Freighter connected successfully with key:', key);
+      console.log('Wallet connected successfully with key:', key);
       return key;
     } catch (err: any) {
       const errorMessage =
         err?.message || 'Failed to connect wallet. Please try again.';
-      console.error('Freighter connection error:', err);
+      console.error('Wallet connection error:', err);
       setError(errorMessage);
       setNetworkError(errorMessage);
       setIsConnected(false);
@@ -109,18 +151,20 @@ export function useFreighter() {
   }, [setPublicKey, setIsConnected]);
 
   const signTransaction = useCallback(
-    async (transactionXDR: string, network: string) => {
+    async (transactionXDR: string, options?: { network?: string }) => {
       if (!isFreighterInstalled()) {
-        throw new Error('Freighter extension not installed');
+        throw new Error('Stellar wallet extension not installed');
       }
 
       try {
-        const window_ = globalThis as unknown as FreighterWindow;
-        console.log('Signing transaction with Freighter...');
-        const result = await window_.freighter?.signTransaction(
-          transactionXDR,
-          network
-        );
+        const w = globalThis as unknown as StellarWindow;
+        if (!w.stellar) {
+          throw new Error('Stellar wallet API not available');
+        }
+        
+        console.log('Signing transaction with Stellar wallet...');
+        const result = await w.stellar.signTransaction(transactionXDR, options);
+        
         if (!result?.signedXDR) {
           throw new Error('Transaction signing returned empty result');
         }
@@ -138,13 +182,18 @@ export function useFreighter() {
   const signMessage = useCallback(
     async (message: string) => {
       if (!isFreighterInstalled()) {
-        throw new Error('Freighter extension not installed');
+        throw new Error('Stellar wallet extension not installed');
       }
 
       try {
-        const window_ = globalThis as unknown as FreighterWindow;
-        console.log('Signing message with Freighter...');
-        const result = await window_.freighter?.signMessage(message);
+        const w = globalThis as unknown as StellarWindow;
+        if (!w.stellar) {
+          throw new Error('Stellar wallet API not available');
+        }
+        
+        console.log('Signing message with Stellar wallet...');
+        const result = await w.stellar.signMessage(message);
+        
         if (!result?.signedMessage) {
           throw new Error('Message signing returned empty result');
         }

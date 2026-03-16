@@ -3,6 +3,10 @@ import {
   TransactionBuilder,
   Networks,
   SorobanRpc,
+  nativeToScVal,
+  scValToNative,
+  Address,
+  MethodOptions,
 } from '@stellar/stellar-sdk';
 
 // Contract configuration
@@ -11,6 +15,18 @@ export const NETWORK_PASSPHRASE = 'Test SDF Network ; September 2015';
 export const RPC_URL = 'https://soroban-testnet.stellar.org';
 
 const server = new SorobanRpc.Server(RPC_URL);
+
+interface StellarWindow extends Window {
+  stellar?: {
+    isConnected: () => Promise<boolean>;
+    getPublicKey: () => Promise<string>;
+    signTransaction: (
+      transactionXDR: string,
+      options?: { network?: string }
+    ) => Promise<{ signedXDR: string }>;
+    signMessage: (message: string) => Promise<{ signedMessage: string }>;
+  };
+}
 
 interface GameStats {
   games_played: number;
@@ -28,6 +44,42 @@ interface ContractResponse {
 }
 
 /**
+ * Get the Stellar wallet instance
+ */
+export function getWallet() {
+  const w = globalThis as unknown as StellarWindow;
+  return w.stellar;
+}
+
+/**
+ * Check if wallet is connected
+ */
+export async function isWalletConnected(): Promise<boolean> {
+  try {
+    const wallet = getWallet();
+    if (!wallet) return false;
+    return await wallet.isConnected();
+  } catch (error) {
+    console.error('Error checking wallet connection:', error);
+    return false;
+  }
+}
+
+/**
+ * Get the connected wallet's public key
+ */
+export async function getWalletPublicKey(): Promise<string | null> {
+  try {
+    const wallet = getWallet();
+    if (!wallet) return null;
+    return await wallet.getPublicKey();
+  } catch (error) {
+    console.error('Error getting wallet public key:', error);
+    return null;
+  }
+}
+
+/**
  * Create a new game session
  */
 export async function createGame(
@@ -36,9 +88,17 @@ export async function createGame(
   wallet: any
 ): Promise<bigint | null> {
   try {
+    console.log('Creating game session...', { player1, player2 });
+    
+    // Check if wallet is available
+    if (!wallet) {
+      throw new Error('Wallet not connected');
+    }
+
     // This is a placeholder implementation
     // In production, you'd interact with the Soroban contract
     const sessionId = BigInt(Math.floor(Math.random() * 1000000));
+    console.log('Game session created:', sessionId);
     return sessionId;
   } catch (error) {
     console.error('Error creating game:', error);

@@ -11,7 +11,14 @@ export const Navbar: React.FC = () => {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    
+    // Log wallet status for debugging
+    console.log('Navbar mounted. Wallet status:', {
+      isInstalled: isFreighterInstalled(),
+      isConnected,
+      publicKey,
+    });
+  }, [isConnected, publicKey, isFreighterInstalled]);
 
   if (!mounted) return null;
 
@@ -49,7 +56,7 @@ export const Navbar: React.FC = () => {
           <button
             onClick={isConnected ? disconnect : connect}
             disabled={!isFreighterInstalled()}
-            title={!isFreighterInstalled() ? 'Freighter extension not detected' : ''}
+            title={!isFreighterInstalled() ? 'Freighter extension not detected. Check console for details.' : ''}
             className={`px-6 py-2 font-mono text-sm uppercase border-2 rounded-lg transition-colors ${
               isConnected
                 ? 'border-ember text-ember hover:bg-ember/10'
@@ -58,11 +65,28 @@ export const Navbar: React.FC = () => {
                 : 'border-red-500 text-red-500 opacity-50 cursor-not-allowed'
             }`}
           >
-            {isConnected ? `${publicKey?.slice(0, 4)}...` : isFreighterInstalled() ? 'Connect' : 'Freighter Not Found'}
+            {isConnected 
+              ? `${publicKey?.slice(0, 6)}...${publicKey?.slice(-4)}` 
+              : isFreighterInstalled() 
+              ? 'Connect Wallet' 
+              : 'Freighter Not Found'}
           </button>
         </div>
       </div>
-      {error && <div className="text-xs text-red-500 mt-2 text-center">{error}</div>}
+      
+      {/* Error Message */}
+      {error && (
+        <div className="text-xs text-red-500 mt-2 text-center font-mono">
+          {error}
+        </div>
+      )}
+      
+      {/* Debug Info */}
+      {!isFreighterInstalled() && (
+        <div className="text-xs text-yellow-500/70 mt-2 text-center font-mono">
+          Open DevTools Console (F12) to check wallet status: window.stellar
+        </div>
+      )}
     </motion.nav>
   );
 };
